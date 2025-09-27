@@ -9,13 +9,14 @@ import UIKit
 import SnapKit
 
 final class MainViewController: UIViewController {
+    private let filterBar = FilterBarView()
     private let table = UITableView(frame: .zero, style: .plain)
     private let loader = UIActivityIndicatorView(style: .large)
     private let api = FlightAPI()
     
 
     private var params = FlightAPI.Params(currency: "USD", origin: "MOW", destination: "HKT")
-    
+    private var selectedDate: Date? = nil
     private var flights: [Flight] = []
     private var priceGroup = PriceGroup(minPrice: 0, midPrice: 0, maxprice: 0)
     
@@ -23,13 +24,19 @@ final class MainViewController: UIViewController {
         super.viewDidLoad()
         title = "Билеты  \(params.origin)→\(params.destination)"
         view.backgroundColor = .systemBackground
-        
-        setupTable()
-        setupLoader()
+        setupLayout()
         loadData()
     }
     
-    private func setupTable() {
+    private func setupLayout() {
+        view.addSubview(filterBar)
+        filterBar.delegate = self
+        filterBar.configure(origin: params.origin, destination: params.destination, date: selectedDate)
+        filterBar.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            make.left.right.equalToSuperview()
+        }
+        
         table.backgroundColor = .clear
         table.separatorStyle = .none
         table.dataSource = self
@@ -38,11 +45,10 @@ final class MainViewController: UIViewController {
         
         view.addSubview(table)
         table.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+            make.top.equalTo(filterBar.snp.bottom)
+            make.left.right.bottom.equalTo(view.safeAreaLayoutGuide)
         }
-    }
-    
-    private func setupLoader() {
+        
         loader.hidesWhenStopped = true
         view.addSubview(loader)
         loader.snp.makeConstraints { make in
@@ -122,5 +128,22 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         print("cell tapped")
+    }
+}
+// MARK: - filter
+extension MainViewController: FilterBarViewDelegate {
+
+    func filterBarDidTapApply(origin: String, destination: String, date: Date?) {
+        guard origin.count == 3, destination.count == 3 else {
+            showError(NSError(domain: "Filter", code: 0, userInfo: [NSLocalizedDescriptionKey: "iata"]))
+            return
+        }
+        params = .init(currency: params.currency, origin: origin, destination: destination)
+        selectedDate = date
+        title = "Билеты  \(origin)→\(destination)"
+        loadData()
+    }
+    func filterBarDidSwap(origin: String, destination: String) {
+        print("swap destination")
     }
 }
