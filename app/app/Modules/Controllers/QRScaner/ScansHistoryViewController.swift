@@ -24,7 +24,11 @@ final class ScansHistoryViewController: UITableViewController, NSFetchedResultsC
         super.viewDidLoad()
         title = "История билетов"
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        do { try fetchReq.performFetch() } catch { print("FRC error:", error) }
+        do {
+            try fetchReq.performFetch()
+        } catch {
+            print("FRC error:", error)
+        }
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -39,7 +43,9 @@ final class ScansHistoryViewController: UITableViewController, NSFetchedResultsC
         var cfg = cell.defaultContentConfiguration()
         let date = DateFormatter.localizedString(from: scan.createdAt ?? Date.now, dateStyle: .medium, timeStyle: .short)
         let route = [scan.origin, scan.destination].compactMap{$0}.joined(separator: " → ")
-        cfg.text = route.isEmpty ? "Скан: \(String(describing: scan.rawText?.prefix(32)))..." : route
+        let raw = scan.rawText ?? ""
+        let short = raw.count > 32 ? "\(raw.prefix(32))..." : raw
+        cfg.text = route.isEmpty ? "Скан: \(short)" : route
         cfg.secondaryText = date
         cell.contentConfiguration = cfg
         cell.accessoryType = .disclosureIndicator
