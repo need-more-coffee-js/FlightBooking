@@ -1,6 +1,6 @@
 # FlightBooking
 
-<img src="Screenshots/logo.PNG" width="120" />
+<img src="Screenshots/logo.jpg" width="120" />
 
 **FlightBooking** — учебное iOS-приложение на Swift для поиска авиабилетов и хранения истории QR-сканов билетов.  
 Проект сделан на стеке **UIKit + SnapKit + CoreData + GCD**, с кастомной вёрсткой в card-стиле.
