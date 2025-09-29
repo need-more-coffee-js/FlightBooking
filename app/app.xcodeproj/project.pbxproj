@@ -352,6 +352,7 @@
 				DEVELOPMENT_TEAM = 4KFUD4SUDH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = app/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FlightBooking;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -381,6 +382,7 @@
 				DEVELOPMENT_TEAM = 4KFUD4SUDH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = app/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FlightBooking;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
