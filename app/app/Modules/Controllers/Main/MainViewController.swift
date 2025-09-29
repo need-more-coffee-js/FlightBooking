@@ -64,14 +64,19 @@ final class MainViewController: UIViewController {
         setupLayout()
     }
     
+    // где ты открываешь сканер (например, в MainViewController)
     @objc private func onScanQR() {
         let scanner = QRScannerViewController()
         scanner.onCode = { [weak self] raw in
             guard let self = self else { return }
-
-            let saved = ScansStore.shared.addScan(rawText: raw)
-
-            let flight = self.flights.first ?? MockFlightFactory.make(fromScan: saved!)
+            let parsed = TicketQRParser.parse(raw)
+            // сохраняем
+            _ = ScansStore.shared.addScan(rawText: raw,
+                                          origin: parsed.origin,
+                                          destination: parsed.destination,
+                                          price: parsed.price)
+            // показываем детали
+            let flight = TicketQRParser.makeFlight(from: parsed)
             let vc = FlightDetailsViewController(flight: flight)
             let nav = UINavigationController(rootViewController: vc)
             if #available(iOS 15.0, *) {
@@ -84,6 +89,7 @@ final class MainViewController: UIViewController {
         }
         present(scanner, animated: true)
     }
+
 
     @objc private func onHistory() {
         let vc = ScansHistoryViewController(style: .insetGrouped)

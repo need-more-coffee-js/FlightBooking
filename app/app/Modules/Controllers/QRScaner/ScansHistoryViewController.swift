@@ -53,8 +53,7 @@ final class ScansHistoryViewController: UITableViewController, NSFetchedResultsC
     }
 
     override func tableView(_ tableView: UITableView,
-                            trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
-    -> UISwipeActionsConfiguration? {
+                            trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let del = UIContextualAction(style: .destructive, title: "Удалить") { _,_,done in
             let scan = self.fetchReq.object(at: indexPath)
             ScansStore.shared.delete(scan)
@@ -66,7 +65,8 @@ final class ScansHistoryViewController: UITableViewController, NSFetchedResultsC
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let scan = fetchReq.object(at: indexPath)
-        let flight = MockFlightFactory.make(fromScan: scan)
+        let parsed = TicketQRParser.parse(scan.rawText ?? "")
+        let flight = TicketQRParser.makeFlight(from: parsed)
         let vc = FlightDetailsViewController(flight: flight)
         let nav = UINavigationController(rootViewController: vc)
         if #available(iOS 15.0, *) {

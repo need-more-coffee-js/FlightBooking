@@ -11,52 +11,61 @@ import SnapKit
 
 final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var onCode: ((String) -> Void)?
-    
     private let session = AVCaptureSession()
-    private var previewLayer: AVCaptureVideoPreviewLayer!
+    private var previewLayer: AVCaptureVideoPreviewLayer?
     private let closeButton = UIButton(type: .system)
-    
+    private let sessionQueue = DispatchQueue(label: "qr.session")
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
         setupCamera()
         setupClose()
     }
-    
+
     private func setupCamera() {
-        guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input) else {
-            showFail("Камера недоступна")
-            return
-        }
-        session.addInput(input)
-        
-        let output = AVCaptureMetadataOutput()
-        guard session.canAddOutput(output) else {
-            showFail("Ошибка инициализации камеры")
-            return
-        }
-        session.addOutput(output)
-        output.setMetadataObjectsDelegate(self, queue: .main)
-        output.metadataObjectTypes = [.qr, .aztec, .pdf417, .dataMatrix, .code128]
-        
-        previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.frame = view.bounds
-        view.layer.addSublayer(previewLayer)
-        
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            guard let device = AVCaptureDevice.default(for: .video),
+                  let input = try? AVCaptureDeviceInput(device: device),
+                  self.session.canAddInput(input) else {
+                DispatchQueue.main.async { self.showFail("Камера недоступна") }
+                return
+            }
+            self.session.beginConfiguration()
+            self.session.addInput(input)
+
+            let output = AVCaptureMetadataOutput()
+            guard self.session.canAddOutput(output) else {
+                self.session.commitConfiguration()
+                DispatchQueue.main.async { self.showFail("Ошибка инициализации камеры") }
+                return
+            }
+            self.session.addOutput(output)
+            output.setMetadataObjectsDelegate(self, queue: .main)
+            output.metadataObjectTypes = [.qr, .aztec, .pdf417, .dataMatrix, .code128]
+            self.session.commitConfiguration()
+
+            DispatchQueue.main.async {
+                let layer = AVCaptureVideoPreviewLayer(session: self.session)
+                layer.videoGravity = .resizeAspectFill
+                layer.frame = self.view.bounds
+                self.view.layer.addSublayer(layer)
+                self.previewLayer = layer
+            }
             self.session.startRunning()
         }
     }
-    
-    
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = view.bounds
+    }
+
     private func setupClose() {
         if #available(iOS 15, *) {
             var cfg = UIButton.Configuration.plain()
-            cfg.title = "Закрыть"
-            cfg.baseForegroundColor = .white
+            cfg.title = "Закрыть"; cfg.baseForegroundColor = .white
             closeButton.configuration = cfg
         } else {
             closeButton.setTitle("Закрыть", for: .normal)
@@ -69,30 +78,26 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
             make.right.equalToSuperview().inset(16)
         }
     }
-    
+
     @objc private func onClose() {
-        session.stopRunning()
+        sessionQueue.async { [weak self] in self?.session.stopRunning() }
         dismiss(animated: true)
     }
-    
-    private func showFail(_ msg: String) {
-        let a = UIAlertController(title: "Ошибка", message: msg, preferredStyle: .alert)
-        a.addAction(.init(title: "OK", style: .default) { _ in self.dismiss(animated: true) })
-        present(a, animated: true)
-    }
-    
+
     func metadataOutput(_ output: AVCaptureMetadataOutput,
                         didOutput metadataObjects: [AVMetadataObject],
                         from connection: AVCaptureConnection) {
         guard let obj = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
               let str = obj.stringValue else { return }
-        session.stopRunning()
+        sessionQueue.async { [weak self] in self?.session.stopRunning() }
         dismiss(animated: true) { [weak self] in self?.onCode?(str) }
     }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        previewLayer.frame = view.bounds
+
+    private func showFail(_ msg: String) {
+        let a = UIAlertController(title: "Ошибка", message: msg, preferredStyle: .alert)
+        a.addAction(.init(title: "OK", style: .default) { _ in self.dismiss(animated: true) })
+        present(a, animated: true)
     }
 }
+
 
