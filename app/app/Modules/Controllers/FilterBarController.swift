@@ -68,7 +68,7 @@ final class FilterBarController: NSObject {
 
     private func resolveCityCode(from userInput: String) -> String? {
         let trimmed = userInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.count == 3, trimmed.uppercased() == trimmed { // уже IATA
+        if trimmed.count == 3, trimmed.uppercased() == trimmed {
             return trimmed
         }
 
@@ -95,7 +95,7 @@ extension FilterBarController: FilterBarViewDelegate {
 
         guard let oCode = resolveCityCode(from: originDisplay),
               let dCode = resolveCityCode(from: destDisplay) else {
-            delegate?.filterBarControllerDidFail("Не удалось найти город. Введите название (например, «Москва») или IATA (MOW).")
+            delegate?.filterBarControllerDidFail("Не удалось найти город")
             return
         }
         delegate?.filterBarControllerDidApply(originCode: oCode, destinationCode: dCode, date: selectedDate)

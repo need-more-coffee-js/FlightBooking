@@ -147,7 +147,20 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
     // MARK: - UITableViewDelegate
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        print("cell tapped")
+        let flight = flights[indexPath.row]
+        let details = FlightDetailsViewController(flight: flight)
+        
+        let nav = UINavigationController(rootViewController: details)
+        if #available(iOS 15.0, *) {
+            nav.modalPresentationStyle = .pageSheet
+            nav.sheetPresentationController?.detents = [.medium(), .large()]
+            nav.sheetPresentationController?.prefersGrabberVisible = true
+            nav.sheetPresentationController?.preferredCornerRadius = 20
+        } else {
+            nav.modalPresentationStyle = .overFullScreen
+            nav.modalTransitionStyle = .coverVertical
+        }
+        present(nav, animated: true)
     }
 }
 // MARK: - filter

@@ -60,7 +60,7 @@ final class FilterBarView: UIView {
 
         styleTextField(originField, placeholder: "Откуда")
         styleTextField(destField,   placeholder: "Куда")
-        styleTextField(dateField,   placeholder: "Дата вылета (опц.)")
+        styleTextField(dateField,   placeholder: "Дата вылета")
         dateField.delegate = self
 
         separator.backgroundColor = .separator
