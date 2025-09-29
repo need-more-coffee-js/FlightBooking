@@ -17,7 +17,7 @@ final class MainViewController: UIViewController {
     private let loader = UIActivityIndicatorView(style: .large)
     private let api = FlightAPI()
     
-
+    private let defaultOriginForPopular = "MOW"
     private var params = FlightAPI.Params(currency: "USD", origin: "MOW", destination: "HKT")
     private var selectedDate: Date? = nil
     private var flights: [Flight] = []
@@ -25,15 +25,36 @@ final class MainViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Билеты  \(params.origin)→\(params.destination)"
         view.backgroundColor = .systemBackground
         setupLayoutOnce()
+        loadPopular()
         loadData()
         loadCities()
         
         let cam = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(onScanQR))
         let history = UIBarButtonItem(barButtonSystemItem: .bookmarks, target: self, action: #selector(onHistory))
         navigationItem.rightBarButtonItems = [cam, history]
+        
+        filterBarController.configure(originDisplay: "", destinationDisplay: "", date: nil)
+    }
+    
+    private func loadPopular() {
+        loader.startAnimating()
+        api.fetchPopularCityDirections(origin: defaultOriginForPopular, currency: "USD") { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.loader.stopAnimating()
+                switch result {
+                case .success(let list):
+                    self.flights = list
+                    self.priceGroup = PriceGroup.from(prices: list.map { $0.price })
+                    self.title = "Популярные из \(CityService.shared.title(for: self.defaultOriginForPopular))"
+                    self.table.reloadData()
+                case .failure(let err):
+                    self.showError(err)
+                }
+            }
+        }
     }
     
     private func setupLayoutOnce() {
@@ -119,6 +140,7 @@ final class MainViewController: UIViewController {
                 case .success(let list):
                     self.flights = list
                     self.priceGroup = PriceGroup.from(prices: list.map { $0.price })
+                    self.title = "Билеты  \(self.params.origin)→\(self.params.destination)"
                     self.table.reloadData()
                 case .failure(let err):
                     self.showError(err)
@@ -205,7 +227,6 @@ extension MainViewController: FilterBarControllerDelegate {
     func filterBarControllerDidApply(originCode: String, destinationCode: String, date: Date?) {
         params = .init(currency: params.currency, origin: originCode, destination: destinationCode)
         selectedDate = date
-        title = "Билеты  \(originCode)→\(destinationCode)"
         loadData()
     }
 

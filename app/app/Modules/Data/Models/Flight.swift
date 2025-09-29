@@ -9,7 +9,7 @@ import Foundation
 
 struct MonthResponseData: Decodable {
     let success: Bool
-    let data: [String: MonthItemData] 
+    let data: [String: MonthItemData]
     let error: String?
     let currency: String?
 }
