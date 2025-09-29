@@ -30,6 +30,7 @@ final class MainViewController: UIViewController {
         loadPopular()
         loadData()
         loadCities()
+        setupKeyboardDismissTap()
         
         let cam = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(onScanQR))
         let history = UIBarButtonItem(barButtonSystemItem: .bookmarks, target: self, action: #selector(onHistory))
@@ -236,5 +237,17 @@ extension MainViewController: FilterBarControllerDelegate {
 
     func filterBarControllerDidFail(_ message: String) {
         showError(NSError(domain: "Filter", code: 0, userInfo: [NSLocalizedDescriptionKey: message]))
+    }
+}
+
+extension MainViewController {
+    private func setupKeyboardDismissTap() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+    }
+
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
 }
