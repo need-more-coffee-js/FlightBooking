@@ -27,7 +27,38 @@ final class MainViewController: UIViewController {
         setupLayout()
         loadData()
         loadCities()
+        
+        let cam = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(onScanQR))
+        let history = UIBarButtonItem(barButtonSystemItem: .bookmarks, target: self, action: #selector(onHistory))
+        navigationItem.rightBarButtonItems = [cam, history]
     }
+    
+    @objc private func onScanQR() {
+        let scanner = QRScannerViewController()
+        scanner.onCode = { [weak self] raw in
+            guard let self = self else { return }
+
+            let saved = ScansStore.shared.addScan(rawText: raw)
+
+            let flight = self.flights.first ?? MockFlightFactory.make(fromScan: saved!)
+            let vc = FlightDetailsViewController(flight: flight)
+            let nav = UINavigationController(rootViewController: vc)
+            if #available(iOS 15.0, *) {
+                nav.modalPresentationStyle = .pageSheet
+                nav.sheetPresentationController?.detents = [.medium(), .large()]
+                nav.sheetPresentationController?.prefersGrabberVisible = true
+                nav.sheetPresentationController?.preferredCornerRadius = 20
+            }
+            self.present(nav, animated: true)
+        }
+        present(scanner, animated: true)
+    }
+
+    @objc private func onHistory() {
+        let vc = ScansHistoryViewController(style: .insetGrouped)
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
     
     private func loadCities(){
         CityService.shared.loadCities { [weak self] result in
