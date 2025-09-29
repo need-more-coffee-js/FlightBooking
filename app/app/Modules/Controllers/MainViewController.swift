@@ -26,6 +26,21 @@ final class MainViewController: UIViewController {
         view.backgroundColor = .systemBackground
         setupLayout()
         loadData()
+        loadCities()
+    }
+    
+    private func loadCities(){
+        CityService.shared.loadCities { [weak self] result in
+            switch result {
+            case .success:
+                self?.setupLayout()
+                self?.loadData()
+            case .failure(let err):
+                print("Не удалось загрузить города:", err)
+                self?.setupLayout()
+                self?.loadData()
+            }
+        }
     }
     
     private func setupLayout() {
@@ -111,8 +126,12 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
         }()
         let transfersBG: UIColor = (flight.transfers == 0) ? .systemGreen : .systemBlue
         
+        let originTitle = CityService.shared.title(for: flight.origin)
+        let destTitle   = CityService.shared.title(for: flight.destination)
+        let routeText   = "\(originTitle) → \(destTitle)"
+        
         let vm = FlightCell.ViewModel(
-            route: flight.routeText,
+            route: routeText,
             airline: "Авиакомпания: \(flight.airlineIATA)",
             dates: dateText,
             priceText: priceText,
@@ -134,13 +153,17 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
 extension MainViewController: FilterBarViewDelegate {
 
     func filterBarDidTapApply(origin: String, destination: String, date: Date?) {
-        guard origin.count == 3, destination.count == 3 else {
-            showError(NSError(domain: "Filter", code: 0, userInfo: [NSLocalizedDescriptionKey: "iata"]))
+        let originMatch = CityService.shared.findIATA(for: origin).first
+        let destMatch   = CityService.shared.findIATA(for: destination).first
+        
+        guard let o = originMatch, let d = destMatch else {
+            showError(NSError(domain: "Filter", code: 0, userInfo: [NSLocalizedDescriptionKey: "Не удалось найти город"]))
             return
         }
-        params = .init(currency: params.currency, origin: origin, destination: destination)
+        
+        params = .init(currency: params.currency, origin: o.code, destination: d.code)
         selectedDate = date
-        title = "Билеты  \(origin)→\(destination)"
+        title = "Билеты \(o.name)→\(d.name)"
         loadData()
     }
     func filterBarDidSwap(origin: String, destination: String) {
