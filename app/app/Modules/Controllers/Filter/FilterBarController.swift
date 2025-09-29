@@ -66,14 +66,14 @@ final class FilterBarController: NSObject {
         return f.string(from: d)
     }
 
-    private func resolveCityCode(from userInput: String) -> String? {
-        let trimmed = userInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.count == 3, trimmed.uppercased() == trimmed {
-            return trimmed
-        }
-
-        return CityService.shared.findIATA(for: trimmed).first?.code
-    }
+//    private func resolveCityCode(from userInput: String) -> String? {
+//        let trimmed = userInput.trimmingCharacters(in: .whitespacesAndNewlines)
+//        if trimmed.count == 3, trimmed.uppercased() == trimmed {
+//            return trimmed
+//        }
+//
+//        return CityService.shared.findIATA(for: trimmed).first?.code
+//    }
 }
 
 
@@ -93,12 +93,19 @@ extension FilterBarController: FilterBarViewDelegate {
         let originDisplay = view.getOrigin()
         let destDisplay   = view.getDestination()
 
-        guard let oCode = resolveCityCode(from: originDisplay),
-              let dCode = resolveCityCode(from: destDisplay) else {
-            delegate?.filterBarControllerDidFail("Не удалось найти город")
-            return
+        CityService.shared.findAsync(query: originDisplay) { origins in
+            CityService.shared.findAsync(query: destDisplay) { dests in
+                guard let o = origins.first, let d = dests.first else {
+                    self.delegate?.filterBarControllerDidFail("Не удалось найти город")
+                    return
+                }
+                self.delegate?.filterBarControllerDidApply(
+                    originCode: o.code,
+                    destinationCode: d.code,
+                    date: self.selectedDate
+                )
+            }
         }
-        delegate?.filterBarControllerDidApply(originCode: oCode, destinationCode: dCode, date: selectedDate)
     }
 }
 

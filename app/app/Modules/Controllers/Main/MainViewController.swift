@@ -9,6 +9,9 @@ import UIKit
 import SnapKit
 
 final class MainViewController: UIViewController {
+    
+    private var didSetupUI = false
+    
     private let filterBarController = FilterBarController()
     private let table = UITableView(frame: .zero, style: .plain)
     private let loader = UIActivityIndicatorView(style: .large)
@@ -24,13 +27,19 @@ final class MainViewController: UIViewController {
         super.viewDidLoad()
         title = "Билеты  \(params.origin)→\(params.destination)"
         view.backgroundColor = .systemBackground
-        setupLayout()
+        setupLayoutOnce()
         loadData()
         loadCities()
         
         let cam = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(onScanQR))
         let history = UIBarButtonItem(barButtonSystemItem: .bookmarks, target: self, action: #selector(onHistory))
         navigationItem.rightBarButtonItems = [cam, history]
+    }
+    
+    private func setupLayoutOnce() {
+        guard !didSetupUI else { return }
+        didSetupUI = true
+        setupLayout()
     }
     
     @objc private func onScanQR() {
@@ -61,15 +70,12 @@ final class MainViewController: UIViewController {
 
     
     private func loadCities(){
-        CityService.shared.loadCities { [weak self] result in
+        CityService.shared.loadCities { result in
             switch result {
             case .success:
-                self?.setupLayout()
-                self?.loadData()
+                print("success")
             case .failure(let err):
                 print("Не удалось загрузить города:", err)
-                self?.setupLayout()
-                self?.loadData()
             }
         }
     }
