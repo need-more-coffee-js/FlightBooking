@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 
 final class MainViewController: UIViewController {
-    private let filterBar = FilterBarView()
+    private let filterBarController = FilterBarController()
     private let table = UITableView(frame: .zero, style: .plain)
     private let loader = UIActivityIndicatorView(style: .large)
     private let api = FlightAPI()
@@ -44,10 +44,11 @@ final class MainViewController: UIViewController {
     }
     
     private func setupLayout() {
-        view.addSubview(filterBar)
-        filterBar.delegate = self
-        filterBar.configure(origin: params.origin, destination: params.destination, date: selectedDate)
-        filterBar.snp.makeConstraints { make in
+        filterBarController.delegate = self
+        filterBarController.configure(originDisplay: params.origin, destinationDisplay: params.destination, date: selectedDate)
+
+        view.addSubview(filterBarController.view)
+        filterBarController.view.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             make.left.right.equalToSuperview()
         }
@@ -60,7 +61,7 @@ final class MainViewController: UIViewController {
         
         view.addSubview(table)
         table.snp.makeConstraints { make in
-            make.top.equalTo(filterBar.snp.bottom)
+            make.top.equalTo(filterBarController.view.snp.bottom)
             make.left.right.bottom.equalTo(view.safeAreaLayoutGuide)
         }
         
@@ -150,23 +151,19 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
     }
 }
 // MARK: - filter
-extension MainViewController: FilterBarViewDelegate {
-
-    func filterBarDidTapApply(origin: String, destination: String, date: Date?) {
-        let originMatch = CityService.shared.findIATA(for: origin).first
-        let destMatch   = CityService.shared.findIATA(for: destination).first
-        
-        guard let o = originMatch, let d = destMatch else {
-            showError(NSError(domain: "Filter", code: 0, userInfo: [NSLocalizedDescriptionKey: "Не удалось найти город"]))
-            return
-        }
-        
-        params = .init(currency: params.currency, origin: o.code, destination: d.code)
+extension MainViewController: FilterBarControllerDelegate {
+    func filterBarControllerDidApply(originCode: String, destinationCode: String, date: Date?) {
+        params = .init(currency: params.currency, origin: originCode, destination: destinationCode)
         selectedDate = date
-        title = "Билеты \(o.name)→\(d.name)"
+        title = "Билеты  \(originCode)→\(destinationCode)"
         loadData()
     }
-    func filterBarDidSwap(origin: String, destination: String) {
+
+    func filterBarControllerDidSwap(originDisplay: String, destinationDisplay: String) {
         print("swap destination")
+    }
+
+    func filterBarControllerDidFail(_ message: String) {
+        showError(NSError(domain: "Filter", code: 0, userInfo: [NSLocalizedDescriptionKey: message]))
     }
 }
